@@ -979,18 +979,17 @@ bool NimBLEDevice::setOwnAddrType(uint8_t type) {
 
     m_ownAddrType = type;
 
+# if MYNEWT_VAL(BLE_HOST_BASED_PRIVACY)
     if (type == BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT || type == BLE_OWN_ADDR_RPA_RANDOM_DEFAULT) {
-# ifdef CONFIG_IDF_TARGET_ESP32
         // esp32 controller does not support RPA so we must use the random static for calls to the stack
         // the host will take care of the random private address generation/setting.
         m_ownAddrType = BLE_OWN_ADDR_RANDOM;
         rc            = ble_hs_pvcy_rpa_config(NIMBLE_HOST_ENABLE_RPA);
-# endif
     } else {
-# ifdef CONFIG_IDF_TARGET_ESP32
         rc = ble_hs_pvcy_rpa_config(NIMBLE_HOST_DISABLE_PRIVACY);
-# endif
+
     }
+# endif
 
     return rc == 0;
 } // setOwnAddrType
@@ -1025,6 +1024,7 @@ bool NimBLEDevice::setOwnAddr(const uint8_t* addr) {
 /*                                  SECURITY                                  */
 /* -------------------------------------------------------------------------- */
 
+# if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL) || defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 /**
  * @brief Set the authorization mode for this device.
  * @param bonding If true we allow bonding, false no bonding will be performed.
@@ -1146,6 +1146,8 @@ bool NimBLEDevice::injectConfirmPasskey(const NimBLEConnInfo& peerInfo, bool acc
     NIMBLE_LOGD(LOG_TAG, "BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: %d", rc);
     return rc == 0;
 }
+
+#endif
 
 /* -------------------------------------------------------------------------- */
 /*                                  UTILITIES                                 */
